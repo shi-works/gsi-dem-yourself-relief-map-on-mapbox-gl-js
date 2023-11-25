@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>自分で作る色別標高図（地理院 標高タイル）</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.0-beta.1/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.0-beta.1/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hpd29ya3MiLCJhIjoiY2szeHZjeXJsMDJzdDNsbXczdnN1b3hpNiJ9.VQg_5pGbF1qU_6FZ33Uf4g';
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: 'https://tile.openstreetmap.jp/styles/maptiler-basic-ja/style.json',
+      hash: true,
+      center: {
+        lat: 35.828,
+        lng: 140.048
+      },
+      zoom: 8.26,
+      language: 'ja',
+      attributionControl: false
+    });
+
+    // ズーム・回転
+    map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+    // フルスクリーンモードのオンオフ
+    map.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+
+    // 現在位置表示
+    map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: false
+      },
+      fitBoundsOptions: { maxZoom: 18 },
+      trackUserLocation: true,
+      showUserLocation: true
+    }), 'top-left');
+
+    // スケール表示
+    map.addControl(new mapboxgl.ScaleControl({
+      maxWidth: 200,
+      unit: 'metric'
+    }));
+
+    // Attributionを折りたたみ表示
+    map.addControl(new mapboxgl.AttributionControl({
+      compact: true,
+      customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/japan-sea-level-rise-map-on-mapbox-gl-js" target="_blank">Github</a>） '
+    }));
+
+    // 地図がロードされたら実行
+    map.on('load', () => {
+      // 標高タイルDEMソース
+      map.addSource('gsi-terrain-dem', {
+        "type": "raster-dem",
+        "minzoom": 1,
+        "maxzoom": 18,
+        // https://github.com/optgeo/et10b
+        "tiles": ["https://smb.optgeo.org/ipfs/QmWGYxRhixi4itNhy1YWtYX9sBcYxuykwENNxDsWMfqNgh/{z}/{x}/{y}.webp"],
+        "tileSize": 512,
+        "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
+      })
+
+      // 標高タイルDEMセット
+      map.setTerrain({ 'source': 'gsi-terrain-dem', 'exaggeration': 1 });
+
+      // 標高タイルラスターソース
+      map.addSource('gsi-terrain-raster', {
+        "type": "raster",
+        "minzoom": 1,
+        "maxzoom": 18,
+        // https://github.com/optgeo/et10b
+        "tiles": ["https://smb.optgeo.org/ipfs/QmWGYxRhixi4itNhy1YWtYX9sBcYxuykwENNxDsWMfqNgh/{z}/{x}/{y}.webp"],
+        "tileSize": 512,
+        "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
+      })
+
+      var colors = {
+        "-0": '#2db4b4',
+        "0-100": "#71b42d",
+        "100-300": "#b4a72d",
+        "300-1000": "#b4562d",
+        "1000-2000": "#b4491b",
+        "2000-4000": "#b43d09",
+        "4000-": "#b43d09"
+      };
+
+      // 標高分解能
+      const u = 0.1
+
+      // 標高タイルラスターレイヤ
+      map.addLayer({
+        id: 'gsi-terrain-raster',
+        source: 'gsi-terrain-raster',
+        type: 'raster',
+        paint: {
+          'raster-color': [
+            'interpolate',
+            ['linear'],
+            ['raster-value'],
+            0, colors['-0'],
+            100, colors['0-100'],
+            300, colors['100-300'],
+            1000, colors['300-1000'],
+            2000, colors['1000-2000'],
+            4000 * 0.99, colors['2000-4000'],
+            4000, colors['4000-']
+          ],
+          'raster-color-mix': [
+            2 ** 16 * 255 * u,
+            2 ** 8 * 255 * u,
+            255 * u,
+            -10000
+          ],
+          'raster-color-range': [0, 4000],
+          'raster-opacity': 0.7,
+          'raster-resampling': 'nearest'
+        }
+      })
+
+      var gui = new dat.GUI();
+      gui.addColor(colors, '-0').onChange(setReliefColors);
+      gui.addColor(colors, '0-100').onChange(setReliefColors);
+      gui.addColor(colors, '100-300').onChange(setReliefColors);
+      gui.addColor(colors, '300-1000').onChange(setReliefColors);
+      gui.addColor(colors, '1000-2000').onChange(setReliefColors);
+      gui.addColor(colors, '2000-4000').onChange(setReliefColors);
+      gui.addColor(colors, '4000-').onChange(setReliefColors);
+
+      function setReliefColors() {
+        map.setPaintProperty('gsi-terrain-raster', 'raster-color', [
+          'interpolate',
+          ['linear'],
+          ['raster-value'],
+          0, colors['-0'],
+          100, colors['0-100'],
+          300, colors['100-300'],
+          1000, colors['300-1000'],
+          2000, colors['1000-2000'],
+          4000 * 0.99, colors['2000-4000'],
+          4000, colors['4000-']
+        ]);
+      }
+
+      // 陰影起伏図ソース
+      map.addSource("hillshade", {
+        type: 'raster',
+        tiles: [
+          'https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',
+        ],
+        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#hillshademap" target="_blank">地理院タイル(陰影起伏図)</a>',
+        tileSize: 256
+      });
+
+      // 陰影起伏図レイヤ
+      map.addLayer({
+        id: 'hillshade',
+        type: 'raster',
+        source: 'hillshade',
+        minzoom: 2,
+        maxzoom: 18,
+        paint: {
+          'raster-opacity': 0.3
+        }
+      });
+
+    })
+  </script>
+
+</body>
+
+</html>
