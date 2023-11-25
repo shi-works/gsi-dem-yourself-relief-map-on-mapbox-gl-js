@@ -97,13 +97,17 @@
       })
 
       var colors = {
-        "-0": '#2db4b4',
-        "0-100": "#71b42d",
-        "100-300": "#b4a72d",
-        "300-1000": "#b4562d",
-        "1000-2000": "#b4491b",
-        "2000-4000": "#b43d09",
-        "4000-": "#b43d09"
+        "-0": '#7B77D8',
+        "0-250": '#72D3FE',
+        "250-500": '#72FED9',
+        "500-750": '#74FF8A',
+        "750-1000": '#AAFE72',
+        "1000-1250": '#F9FF74',
+        "1000-1250": '#F9FF74',
+        "1250-1500": '#FDB271',
+        "1500-1750": '#FF7380',
+        "1750-2000": '#FE72D2',
+        "2000-": '#F274FC'
       };
 
       // 標高分解能
@@ -120,12 +124,15 @@
             ['linear'],
             ['raster-value'],
             0, colors['-0'],
-            100, colors['0-100'],
-            300, colors['100-300'],
-            1000, colors['300-1000'],
-            2000, colors['1000-2000'],
-            4000 * 0.99, colors['2000-4000'],
-            4000, colors['4000-']
+            250, colors['0-250'],
+            500, colors['250-500'],
+            750, colors['500-750'],
+            1000, colors['750-1000'],
+            1250, colors['1000-1250'],
+            1500, colors['1250-1500'],
+            1750, colors['1500-1750'],
+            2000, colors['1750-2000'],
+            4000, colors['2000-']
           ],
           'raster-color-mix': [
             2 ** 16 * 255 * u,
@@ -141,12 +148,15 @@
 
       var gui = new dat.GUI();
       gui.addColor(colors, '-0').onChange(setReliefColors);
-      gui.addColor(colors, '0-100').onChange(setReliefColors);
-      gui.addColor(colors, '100-300').onChange(setReliefColors);
-      gui.addColor(colors, '300-1000').onChange(setReliefColors);
-      gui.addColor(colors, '1000-2000').onChange(setReliefColors);
-      gui.addColor(colors, '2000-4000').onChange(setReliefColors);
-      gui.addColor(colors, '4000-').onChange(setReliefColors);
+      gui.addColor(colors, '0-250').onChange(setReliefColors);
+      gui.addColor(colors, '250-500').onChange(setReliefColors);
+      gui.addColor(colors, '500-750').onChange(setReliefColors);
+      gui.addColor(colors, '750-1000').onChange(setReliefColors);
+      gui.addColor(colors, '1000-1250').onChange(setReliefColors);
+      gui.addColor(colors, '1250-1500').onChange(setReliefColors);
+      gui.addColor(colors, '1500-1750').onChange(setReliefColors);
+      gui.addColor(colors, '1750-2000').onChange(setReliefColors);
+      gui.addColor(colors, '2000-').onChange(setReliefColors);
 
       function setReliefColors() {
         map.setPaintProperty('gsi-terrain-raster', 'raster-color', [
@@ -154,12 +164,15 @@
           ['linear'],
           ['raster-value'],
           0, colors['-0'],
-          100, colors['0-100'],
-          300, colors['100-300'],
-          1000, colors['300-1000'],
-          2000, colors['1000-2000'],
-          4000 * 0.99, colors['2000-4000'],
-          4000, colors['4000-']
+          250, colors['0-250'],
+          500, colors['250-500'],
+          750, colors['500-750'],
+          1000, colors['750-1000'],
+          1250, colors['1000-1250'],
+          1500, colors['1250-1500'],
+          1750, colors['1500-1750'],
+          2000, colors['1750-2000'],
+          4000, colors['2000-']
         ]);
       }
 
