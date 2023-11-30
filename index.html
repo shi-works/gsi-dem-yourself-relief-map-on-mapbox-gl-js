@@ -200,6 +200,164 @@
         }
       });
 
+      // 地理院ベクトルタイル 自然地名ソース
+      map.addSource("gsi-shizen", {
+        type: 'vector',
+        tiles: [
+          "https://optgeo.github.io/shizen/zxy/{z}/{x}/{y}.pbf"
+        ],
+        attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_pni/" target="_blank">国土地理院ベクトルタイル提供実験（自然地名）</a>',
+      });
+
+      // 地理院ベクトルタイル 自然地名レイヤ
+      map.addLayer({
+        "id": "NNFPt",
+        "layout": {
+          "text-field": [
+            "step",
+            [
+              "zoom"
+            ],
+            [
+              "get",
+              "name"
+            ],
+            14,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ],
+            15,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "kana"
+              ],
+              "：",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ],
+            16,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "kana"
+              ],
+              "／",
+              [
+                "get",
+                "rj"
+              ],
+              "：",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ]
+          ],
+          "text-size": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            11,
+            7,
+            14,
+            20
+          ]
+        },
+        "paint": {
+          "text-color": [
+            "match",
+            [
+              "get",
+              "type"
+            ],
+            [
+              "河川",
+              "湖沼",
+              "滝",
+              "海岸・浜・磯",
+              "湾・灘",
+              "海峡・水道"
+            ],
+            [
+              "rgb",
+              45,
+              91,
+              246
+            ],
+            [
+              "山"
+            ],
+            [
+              "rgb",
+              146,
+              114,
+              39
+            ],
+            [
+              "rgb",
+              0,
+              0,
+              0
+            ]
+          ],
+          "text-halo-color": [
+            "match",
+            [
+              "get",
+              "gaijiFlg"
+            ],
+            1,
+            [
+              "rgb",
+              255,
+              255,
+              0
+            ],
+            [
+              "rgb",
+              255,
+              255,
+              255
+            ]
+          ],
+          "text-halo-width": 2
+        },
+        "source": "gsi-shizen",
+        "source-layer": "NNFPt",
+        "type": "symbol"
+      });
+
     })
   </script>
 
