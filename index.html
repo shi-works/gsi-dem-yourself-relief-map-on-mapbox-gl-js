@@ -78,8 +78,10 @@
         "maxzoom": 18,
         // https://github.com/optgeo/et10b
         // "tiles": ["https://smb.optgeo.org/ipfs/QmWGYxRhixi4itNhy1YWtYX9sBcYxuykwENNxDsWMfqNgh/{z}/{x}/{y}.webp"],
-        "tiles": ["https://optgeo.github.io/10b512-7-113-50/zxy/{z}/{x}/{y}.webp"],
-        "tileSize": 512,
+        // "tiles": ["https://optgeo.github.io/10b512-7-113-50/zxy/{z}/{x}/{y}.webp"],
+        "tiles": ["https://xs489works.xsrv.jp/raster-tiles/gsi/gsi-dem-terrain-rgb/{z}/{x}/{y}.png"],
+        // "tileSize": 512,
+        "tileSize": 256,
         "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
       })
 
@@ -93,8 +95,10 @@
         "maxzoom": 18,
         // https://github.com/optgeo/et10b
         // "tiles": ["https://smb.optgeo.org/ipfs/QmWGYxRhixi4itNhy1YWtYX9sBcYxuykwENNxDsWMfqNgh/{z}/{x}/{y}.webp"],
-        "tiles": ["https://optgeo.github.io/10b512-7-113-50/zxy/{z}/{x}/{y}.webp"],
-        "tileSize": 512,
+        // "tiles": ["https://optgeo.github.io/10b512-7-113-50/zxy/{z}/{x}/{y}.webp"],
+        "tiles": ["https://xs489works.xsrv.jp/raster-tiles/gsi/gsi-dem-terrain-rgb/{z}/{x}/{y}.png"],
+        // "tileSize": 512,
+        "tileSize": 256,
         "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
       })
 
@@ -148,6 +152,7 @@
         }
       })
 
+      /*
       var gui = new dat.GUI();
       gui.addColor(colors, '-0').onChange(setReliefColors);
       gui.addColor(colors, '0-250').onChange(setReliefColors);
@@ -159,7 +164,45 @@
       gui.addColor(colors, '1500-1750').onChange(setReliefColors);
       gui.addColor(colors, '1750-2000').onChange(setReliefColors);
       gui.addColor(colors, '2000-').onChange(setReliefColors);
+      */
 
+      // 標高レンジと色を格納するオブジェクト
+      var elevationColors = {
+        "-0": '#7B77D8',
+        "0-250": '#72D3FE',
+        "250-500": '#72FED9',
+        "500-750": '#74FF8A',
+        "750-1000": '#AAFE72',
+        "1000-1250": '#F9FF74',
+        "1000-1250": '#F9FF74',
+        "1250-1500": '#FDB271',
+        "1500-1750": '#FF7380',
+        "1750-2000": '#FE72D2',
+        "2000-": '#F274FC'
+      };
+
+      // GUIに標高レンジの色設定用コントローラを追加
+      var gui = new dat.GUI();
+      Object.keys(elevationColors).forEach(range => {
+        gui.addColor(elevationColors, range).onChange(setReliefColors);
+      });
+
+      // 標高レンジに基づいて色を設定する関数
+      function setReliefColors() {
+        var rasterColor = ['interpolate', ['linear'], ['raster-value']];
+        Object.keys(elevationColors).forEach(range => {
+          var parts = range.split('-');
+          var min = parseFloat(parts[0]);
+          var max = parts[1] === '' ? undefined : parseFloat(parts[1]);
+          rasterColor.push(min, elevationColors[range]);
+          if (max) {
+            rasterColor.push(max, elevationColors[range]);
+          }
+        });
+        map.setPaintProperty('gsi-terrain-raster', 'raster-color', rasterColor);
+      }
+
+      /*
       function setReliefColors() {
         map.setPaintProperty('gsi-terrain-raster', 'raster-color', [
           'interpolate',
@@ -177,6 +220,7 @@
           4000, colors['2000-']
         ]);
       }
+      */
 
       // 陰影起伏図ソース
       map.addSource("hillshade", {
