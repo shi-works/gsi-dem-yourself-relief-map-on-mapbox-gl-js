@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>自分で作る色別標高図（地理院 標高タイル）</title>
+  <title>自分で作る色別標高図（Mapzen Terrain Tiles）</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
@@ -66,35 +66,29 @@
     // Attributionを折りたたみ表示
     map.addControl(new mapboxgl.AttributionControl({
       compact: true,
-      customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/gsi-dem-yourself-relief-map-on-mapbox-gl-js" target="_blank">Github</a>） '
+      customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/japan-sea-level-rise-map-on-mapbox-gl-js" target="_blank">Github</a>） '
     }));
 
     // 地図がロードされたら実行
     map.on('load', () => {
-      // 標高タイルDEMソース
-      map.addSource('gsi-terrain-dem', {
-        "type": "raster-dem",
-        "minzoom": 1,
-        "maxzoom": 18,
-        "tiles": ["https://xs489works.xsrv.jp/raster-tiles/gsi/gsi-dem-terrain-rgb/{z}/{x}/{y}.png"],
-        "tileSize": 256,
-        "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
-      })
+      // Mapzen標高タイルソース
+      map.addSource("mapzen-terrain", {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        attribution: '<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Tilezen Joerd: Attribution</a>',
+        encoding: "terrarium"
+      });
 
-      // 標高タイルDEMセット
-      map.setTerrain({ 'source': 'gsi-terrain-dem', 'exaggeration': 1 });
+      // Mapzen標高タイルセット
+      map.setTerrain({ 'source': 'mapzen-terrain', 'exaggeration': 1 });
 
-      // 標高タイルラスターソース
-      map.addSource('gsi-terrain-raster', {
-        "type": "raster",
-        "minzoom": 1,
-        "maxzoom": 18,
-        "tiles": ["https://xs489works.xsrv.jp/raster-tiles/gsi/gsi-dem-terrain-rgb/{z}/{x}/{y}.png"],
-        "tileSize": 256,
-        "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html#dem' target='_blank'>地理院タイル(標高タイル)</a>"
-      })
+      // Mapzen標高タイルソース
+      map.addSource("mapzen-terrain-raster", {
+        type: 'raster',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        attribution: '<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Tilezen Joerd: Attribution</a>'
+      });
 
-      // カラーを定義
       var colors = {
         "-0": '#7B77D8',
         "0-250": '#72D3FE',
@@ -109,13 +103,10 @@
         "2000-": '#F274FC'
       };
 
-      // 標高分解能
-      const u = 0.1
-
-      // 標高タイルラスターレイヤ
+      // Mapzen標高タイルラスターレイヤ
       map.addLayer({
-        id: 'gsi-terrain-raster',
-        source: 'gsi-terrain-raster',
+        id: 'mapzen-terrain-raster',
+        source: 'mapzen-terrain-raster',
         type: 'raster',
         paint: {
           'raster-color': [
@@ -134,10 +125,10 @@
             4000, colors['2000-']
           ],
           'raster-color-mix': [
-            2 ** 16 * 255 * u,
-            2 ** 8 * 255 * u,
-            255 * u,
-            -10000
+            255 * 2 ** 8,
+            255,
+            255 / 2 ** 8,
+            -32768
           ],
           'raster-color-range': [0, 4000],
           'raster-opacity': 0.7,
@@ -145,221 +136,35 @@
         }
       })
 
-      // 標高レンジと色を格納するオブジェクト
-      var elevationColors = {
-        "-0": '#7B77D8',
-        "0-250": '#72D3FE',
-        "250-500": '#72FED9',
-        "500-750": '#74FF8A',
-        "750-1000": '#AAFE72',
-        "1000-1250": '#F9FF74',
-        "1000-1250": '#F9FF74',
-        "1250-1500": '#FDB271',
-        "1500-1750": '#FF7380',
-        "1750-2000": '#FE72D2',
-        "2000-": '#F274FC'
-      };
-
-      // GUIに標高レンジの色設定用コントローラを追加
       var gui = new dat.GUI();
-      Object.keys(elevationColors).forEach(range => {
-        gui.addColor(elevationColors, range).onChange(setReliefColors);
-      });
+      gui.addColor(colors, '-0').onChange(setReliefColors);
+      gui.addColor(colors, '0-250').onChange(setReliefColors);
+      gui.addColor(colors, '250-500').onChange(setReliefColors);
+      gui.addColor(colors, '500-750').onChange(setReliefColors);
+      gui.addColor(colors, '750-1000').onChange(setReliefColors);
+      gui.addColor(colors, '1000-1250').onChange(setReliefColors);
+      gui.addColor(colors, '1250-1500').onChange(setReliefColors);
+      gui.addColor(colors, '1500-1750').onChange(setReliefColors);
+      gui.addColor(colors, '1750-2000').onChange(setReliefColors);
+      gui.addColor(colors, '2000-').onChange(setReliefColors);
 
-      // 標高レンジに基づいて色を設定する関数
       function setReliefColors() {
-        var rasterColor = ['interpolate', ['linear'], ['raster-value']];
-        Object.keys(elevationColors).forEach(range => {
-          var parts = range.split('-');
-          var min = parseFloat(parts[0]);
-          var max = parts[1] === '' ? undefined : parseFloat(parts[1]);
-          rasterColor.push(min, elevationColors[range]);
-          if (max) {
-            rasterColor.push(max, elevationColors[range]);
-          }
-        });
-        map.setPaintProperty('gsi-terrain-raster', 'raster-color', rasterColor);
+        map.setPaintProperty('mapzen-terrain-raster', 'raster-color', [
+          'interpolate',
+          ['linear'],
+          ['raster-value'],
+          0, colors['-0'],
+          250, colors['0-250'],
+          500, colors['250-500'],
+          750, colors['500-750'],
+          1000, colors['750-1000'],
+          1250, colors['1000-1250'],
+          1500, colors['1250-1500'],
+          1750, colors['1500-1750'],
+          2000, colors['1750-2000'],
+          4000, colors['2000-']
+        ]);
       }
-
-      // 陰影起伏図ソース
-      map.addSource("hillshade", {
-        type: 'raster',
-        tiles: [
-          'https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',
-        ],
-        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#hillshademap" target="_blank">地理院タイル(陰影起伏図)</a>',
-        tileSize: 256
-      });
-
-      // 陰影起伏図レイヤ
-      map.addLayer({
-        id: 'hillshade',
-        type: 'raster',
-        source: 'hillshade',
-        minzoom: 2,
-        maxzoom: 18,
-        paint: {
-          'raster-opacity': 0.3
-        }
-      });
-
-      // 地理院ベクトルタイル 自然地名ソース
-      map.addSource("gsi-shizen", {
-        type: 'vector',
-        tiles: [
-          "https://optgeo.github.io/shizen/zxy/{z}/{x}/{y}.pbf"
-        ],
-        attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_pni/" target="_blank">国土地理院ベクトルタイル提供実験（自然地名）</a>',
-      });
-
-      // 地理院ベクトルタイル 自然地名レイヤ
-      map.addLayer({
-        "id": "NNFPt",
-        "layout": {
-          "text-field": [
-            "step",
-            [
-              "zoom"
-            ],
-            [
-              "get",
-              "name"
-            ],
-            14,
-            [
-              "concat",
-              [
-                "get",
-                "name"
-              ],
-              "（",
-              [
-                "get",
-                "type"
-              ],
-              "）"
-            ],
-            15,
-            [
-              "concat",
-              [
-                "get",
-                "name"
-              ],
-              "（",
-              [
-                "get",
-                "kana"
-              ],
-              "：",
-              [
-                "get",
-                "type"
-              ],
-              "）"
-            ],
-            16,
-            [
-              "concat",
-              [
-                "get",
-                "name"
-              ],
-              "（",
-              [
-                "get",
-                "kana"
-              ],
-              "／",
-              [
-                "get",
-                "rj"
-              ],
-              "：",
-              [
-                "get",
-                "type"
-              ],
-              "）"
-            ]
-          ],
-          "text-size": [
-            "interpolate",
-            [
-              "linear"
-            ],
-            [
-              "zoom"
-            ],
-            11,
-            7,
-            14,
-            20
-          ]
-        },
-        "paint": {
-          "text-color": [
-            "match",
-            [
-              "get",
-              "type"
-            ],
-            [
-              "河川",
-              "湖沼",
-              "滝",
-              "海岸・浜・磯",
-              "湾・灘",
-              "海峡・水道"
-            ],
-            [
-              "rgb",
-              45,
-              91,
-              246
-            ],
-            [
-              "山"
-            ],
-            [
-              "rgb",
-              146,
-              114,
-              39
-            ],
-            [
-              "rgb",
-              0,
-              0,
-              0
-            ]
-          ],
-          "text-halo-color": [
-            "match",
-            [
-              "get",
-              "gaijiFlg"
-            ],
-            1,
-            [
-              "rgb",
-              255,
-              255,
-              0
-            ],
-            [
-              "rgb",
-              255,
-              255,
-              255
-            ]
-          ],
-          "text-halo-width": 2
-        },
-        "source": "gsi-shizen",
-        "source-layer": "NNFPt",
-        "type": "symbol"
-      });
 
     })
   </script>
